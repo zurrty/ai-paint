@@ -9,14 +9,16 @@ class NewImageDialog(QDialog):
         self.setWindowTitle("New Image")
         self.width_input = QSpinBox()
         self.width_input.setMinimum(1)
+        self.width_input.setMaximum(0xffff)
         self.width_input.setValue(800)
 
 
         self.height_input = QSpinBox()
         self.height_input.setMinimum(1)
+        self.height_input.setMaximum(0xffff)
         self.height_input.setValue(600)
 
-        self.background_color_input = QColorDialog()
+        self.background_color_input = QColorDialog(QColor(0, 0, 0))
 
         layout = QFormLayout(self)
         layout.addRow("Width:", self.width_input)
@@ -34,7 +36,7 @@ class NewImageDialog(QDialog):
             try:
                 width = int(self.width_input.value())
                 height = int(self.height_input.value())
-                background_color = self.background_color_input.selectedColor
+                background_color = self.background_color_input.selectedColor()
                 canvas = Canvas()
                 canvas.set_size(width, height)
                 canvas.image.fill(background_color)

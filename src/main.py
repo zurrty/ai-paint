@@ -8,7 +8,7 @@ from PyQt6.QtCore import Qt
 
 # Import the DrawingWidget from drawing.py
 from drawing import Canvas
-from dialog import ResizeDialog
+from dialog import ResizeDialog, NewImageDialog
 from tools import Tools # Import Tools from the new file
 
 # Pillow (PIL) import - included for future use
@@ -40,7 +40,7 @@ class PaintApp(QMainWindow):
         self.file_menu = self.menu_bar.addMenu("File")
         # File Actions
         new_action = QAction("New", self)
-        # new_action.setIcon(QIcon("path/to/new_icon.png"))
+        new_action.triggered.connect(self._new_image_dialog)
         self.file_menu.addAction(new_action)
 
         open_action = QAction("Open", self)
@@ -107,6 +107,13 @@ class PaintApp(QMainWindow):
             new_width, new_height = resize_dialog.get_size()
             if new_width is not None and new_height is not None:
                 self.canvas.set_size(new_width, new_height)
+    def _new_image_dialog(self):
+        new_image_dialog = NewImageDialog(self)
+        canvas = new_image_dialog.get_canvas()
+        if canvas is not None:
+            self.setCentralWidget(canvas)
+            self.canvas = canvas
+
 
     def keyPressEvent(self, event):
         """
