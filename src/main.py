@@ -1,13 +1,14 @@
 import sys
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QToolBar, QWidget,
-    QInputDialog, QMessageBox
+    QInputDialog, QMessageBox, QDialog, QFormLayout
 )
 from PyQt6.QtGui import QIcon, QAction, QKeySequence # QKeySequence for keyboard shortcuts
 from PyQt6.QtCore import Qt
 
 # Import the DrawingWidget from drawing.py
 from drawing import Canvas
+from dialog import ResizeDialog
 from tools import Tools # Import Tools from the new file
 
 # Pillow (PIL) import - included for future use
@@ -98,31 +99,11 @@ class PaintApp(QMainWindow):
         self.brush_action.setChecked(False) # Ensure only one tool is active
 
     def _show_resize_dialog(self):
-        """
-        Opens a dialog to get new width and height from the user for resizing the image.
-        """
-        current_width = self.canvas.image_width
-        current_height = self.canvas.image_height
-
-        new_width, ok_width = QInputDialog.getInt(
-            self, "Resize Image", f"Enter new width (current: {current_width}px):",
-            current_width, 1, 4000, 1
-        )
-
-        if ok_width:
-            new_height, ok_height = QInputDialog.getInt(
-                self, "Resize Image", f"Enter new height (current: {current_height}px):",
-                current_height, 1, 4000, 1
-            )
-            if ok_height:
+        resize_dialog = ResizeDialog(self.canvas.image_width, self.canvas.image_height, self)
+        if resize_dialog.exec() == QDialog.DialogCode.Accepted:
+            new_width, new_height = resize_dialog.get_size()
+            if new_width is not None and new_height is not None:
                 self.canvas.set_size(new_width, new_height)
-                QMessageBox.information(
-                    self, "Image Resized", f"Image resized to {new_width}x{new_height} pixels."
-                )
-            else:
-                QMessageBox.information(self, "Resize Canceled", "Image height input canceled.")
-        else:
-            QMessageBox.information(self, "Resize Canceled", "Image width input canceled.")
 
     def keyPressEvent(self, event):
         """

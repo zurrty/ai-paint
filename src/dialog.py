@@ -1,0 +1,65 @@
+from PyQt6.QtWidgets import QDialog, QFormLayout, QLineEdit, QDialogButtonBox
+
+
+class ResizeDialog(QDialog):
+    """
+    A custom dialog for getting new width and height values from the user
+    to resize the image canvas.
+    """
+    def __init__(self, current_width, current_height, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Resize Image")
+
+        layout = QFormLayout(self)
+
+        self.width_input = QLineEdit(str(current_width))
+        self.height_input = QLineEdit(str(current_height))
+
+        layout.addRow("New Width:", self.width_input)
+        layout.addRow("New Height:", self.height_input)
+
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
+
+        layout.addRow(button_box)
+
+    def get_size(self):
+        """
+        Returns the entered width and height as integers.
+        Returns None, None if input is invalid.
+        """
+        try:
+            width = int(self.width_input.text())
+            height = int(self.height_input.text())
+            if width > 0 and height > 0:
+                return width, height
+            else:
+                return None, None
+        except ValueError:
+            return None, None
+
+        width_input = QLineEdit(str(current_width))
+        height_input = QLineEdit(str(current_height))
+
+        layout.addRow("New Width:", width_input)
+        layout.addRow("New Height:", height_input)
+
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        button_box.accepted.connect(resize_dialog.accept)
+        button_box.rejected.connect(resize_dialog.reject)
+
+        layout.addRow(button_box)
+
+        if resize_dialog.exec() == QDialog.DialogCode.Accepted:
+            try:
+                new_width = int(width_input.text())
+                new_height = int(height_input.text())
+                if new_width > 0 and new_height > 0:
+                    return new_width, new_height
+                else:
+                    return None, None
+            except ValueError:
+                return None, None
+        else:
+            return None, None
