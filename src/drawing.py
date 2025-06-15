@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QWidget
+from PyQt6.QtWidgets import QWidget, QFileDialog
 from PyQt6.QtGui import QPainter, QImage, QPen, QColor, QTransform
 from PyQt6.QtCore import Qt, QPoint, QPointF
 from tools import Tools, BrushTool, EraserTool # Be more specific or use from tools import *
@@ -11,6 +11,9 @@ class Canvas(QWidget):
     mouse events for interactive drawing, including pan and zoom.
     Supports different drawing tools like brush and eraser.
     """
+
+    # Path to image file
+    image_path = None
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAttribute(Qt.WidgetAttribute.WA_StaticContents)
@@ -103,6 +106,18 @@ class Canvas(QWidget):
         self.tool_size = max(1, size) # Ensure size is at least 1
         if hasattr(self.current_tool, 'size'):
             self.current_tool.size = self.tool_size
+
+    def save_image(self):
+        """Saves the current image to a file."""
+        if type(self.image_path) == str:
+            self.image.save(self.image_path)
+        else:
+            file_path, _ = QFileDialog.getSaveFileName(
+                self, "Save Image", "", "Image Files (*.png *.jpg *.jpeg *.bmp)"
+            )
+            if file_path:
+                self.image_path = file_path
+                self.save_image()
 
 
     def paintEvent(self, event):

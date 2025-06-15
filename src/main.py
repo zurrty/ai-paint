@@ -20,13 +20,14 @@ class PaintApp(QMainWindow):
     and adds a horizontal toolbar with various actions including
     tool selection and image resizing.
     """
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("PyQt6 Paint Application")
         self.setGeometry(100, 100, 800, 600)
 
-        self.drawing_widget = Canvas(self)
-        self.setCentralWidget(self.drawing_widget)
+        self.canvas = Canvas(self)
+        self.setCentralWidget(self.canvas)
 
         self._create_toolbar() # Call method to create toolbar
 
@@ -51,6 +52,8 @@ class PaintApp(QMainWindow):
 
         save_action = QAction("Save", self)
         self.toolbar.addAction(save_action)
+        save_action.triggered.connect(self.canvas.save_image)
+
 
         self.toolbar.addSeparator()
 
@@ -84,13 +87,13 @@ class PaintApp(QMainWindow):
 
     def _set_brush_tool(self):
         """Sets the active tool to Brush."""
-        self.drawing_widget.set_tool(Tools.BRUSH)
+        self.canvas.set_tool(Tools.BRUSH)
         self.brush_action.setChecked(True)
         self.eraser_action.setChecked(False) # Ensure only one tool is active
 
     def _set_eraser_tool(self):
         """Sets the active tool to Eraser."""
-        self.drawing_widget.set_tool(Tools.ERASER)
+        self.canvas.set_tool(Tools.ERASER)
         self.eraser_action.setChecked(True)
         self.brush_action.setChecked(False) # Ensure only one tool is active
 
@@ -98,8 +101,8 @@ class PaintApp(QMainWindow):
         """
         Opens a dialog to get new width and height from the user for resizing the image.
         """
-        current_width = self.drawing_widget.image_width
-        current_height = self.drawing_widget.image_height
+        current_width = self.canvas.image_width
+        current_height = self.canvas.image_height
 
         new_width, ok_width = QInputDialog.getInt(
             self, "Resize Image", f"Enter new width (current: {current_width}px):",
@@ -112,7 +115,7 @@ class PaintApp(QMainWindow):
                 current_height, 1, 4000, 1
             )
             if ok_height:
-                self.drawing_widget.set_size(new_width, new_height)
+                self.canvas.set_size(new_width, new_height)
                 QMessageBox.information(
                     self, "Image Resized", f"Image resized to {new_width}x{new_height} pixels."
                 )
