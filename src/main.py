@@ -1,7 +1,7 @@
 import sys
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QToolBar, QWidget,
-    QInputDialog, QMessageBox, QDialog, QFormLayout
+    QInputDialog, QMessageBox, QDialog, QFormLayout, QStyleFactory
 )
 from PyQt6.QtGui import QIcon, QAction, QKeySequence # QKeySequence for keyboard shortcuts
 from PyQt6.QtCore import Qt
@@ -26,14 +26,40 @@ class PaintApp(QMainWindow):
         super().__init__()
         self.setWindowTitle("PyQt6 Paint Application")
         self.setGeometry(100, 100, 800, 600)
-
         self.canvas = Canvas(self)
         self.setCentralWidget(self.canvas)
-
+        # menu bar
+        
+        self._create_menubar() # Create menu bar
         self._create_toolbar() # Call method to create toolbar
 
         # Optional: Set a window icon
         # self.setWindowIcon(QIcon("path/to/your/icon.png"))
+    def _create_menubar(self):
+        self.menu_bar = self.menuBar()
+        self.file_menu = self.menu_bar.addMenu("File")
+        # File Actions
+        new_action = QAction("New", self)
+        # new_action.setIcon(QIcon("path/to/new_icon.png"))
+        self.file_menu.addAction(new_action)
+
+        open_action = QAction("Open", self)
+        self.file_menu.addAction(open_action)
+
+        save_action = QAction("Save", self)
+        self.file_menu.addAction(save_action)
+        save_action.triggered.connect(self.canvas.save_image)
+        
+        exit_action = QAction("Exit", self)
+        self.file_menu.addAction(exit_action)
+        exit_action.triggered.connect(self.close)
+
+
+        # Image Actions
+        self.image_menu = self.menu_bar.addMenu("Image")
+        resize_action = QAction("Resize Image", self)
+        resize_action.triggered.connect(self._show_resize_dialog)
+        self.image_menu.addAction(resize_action)
 
     def _create_toolbar(self):
         """
@@ -41,33 +67,17 @@ class PaintApp(QMainWindow):
         """
         self.toolbar = QToolBar("Main Toolbar")
         self.addToolBar(self.toolbar)
-        self.toolbar.setMovable(False)
-
-        # File Actions
-        new_action = QAction("New", self)
-        # new_action.setIcon(QIcon("path/to/new_icon.png"))
-        self.toolbar.addAction(new_action)
-
-        open_action = QAction("Open", self)
-        self.toolbar.addAction(open_action)
-
-        save_action = QAction("Save", self)
-        self.toolbar.addAction(save_action)
-        save_action.triggered.connect(self.canvas.save_image)
-
-
-        self.toolbar.addSeparator()
+        self.toolbar.setMovable(True)
 
         # Tool Actions
-        self.brush_action = QAction("Brush (D)", self)
-        # self.brush_action.setIcon(QIcon("path/to/brush_icon.png"))
+        self.brush_action = QAction(QIcon.fromTheme('draw-brush'), "Brush", self)
+        self.brush_action.setShortcut(QKeySequence("D"))
         self.brush_action.setCheckable(True) # Make it checkable so it stays active
         self.brush_action.setChecked(True) # Brush is default active tool
         self.brush_action.triggered.connect(self._set_brush_tool)
         self.toolbar.addAction(self.brush_action)
 
-        self.eraser_action = QAction("Eraser (E)", self)
-        # self.eraser_action.setIcon(QIcon("path/to/eraser_icon.png"))
+        self.eraser_action = QAction(QIcon.fromTheme('draw-eraser'), "Eraser", self)
         self.eraser_action.setCheckable(True)
         self.eraser_action.triggered.connect(self._set_eraser_tool)
         self.toolbar.addAction(self.eraser_action)
@@ -75,16 +85,9 @@ class PaintApp(QMainWindow):
         self.toolbar.addSeparator()
 
         # Image Actions
-        resize_action = QAction("Resize Image", self)
-        resize_action.triggered.connect(self._show_resize_dialog)
-        self.toolbar.addAction(resize_action)
+
 
         self.toolbar.addSeparator()
-
-        # Exit Action
-        exit_action = QAction("Exit", self)
-        exit_action.triggered.connect(self.close)
-        self.toolbar.addAction(exit_action)
 
     def _set_brush_tool(self):
         """Sets the active tool to Brush."""

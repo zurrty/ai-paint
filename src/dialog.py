@@ -1,4 +1,49 @@
-from PyQt6.QtWidgets import QDialog, QFormLayout, QLineEdit, QDialogButtonBox
+from PyQt6.QtWidgets import QDialog, QFormLayout, QLineEdit, QDialogButtonBox, QColorDialog, QSpinBox
+from PyQt6.QtGui import QColor
+
+from drawing import Canvas
+
+class NewImageDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("New Image")
+        self.width_input = QSpinBox()
+        self.width_input.setMinimum(1)
+        self.width_input.setValue(800)
+
+
+        self.height_input = QSpinBox()
+        self.height_input.setMinimum(1)
+        self.height_input.setValue(600)
+
+        self.background_color_input = QColorDialog()
+
+        layout = QFormLayout(self)
+        layout.addRow("Width:", self.width_input)
+        layout.addRow("Height:", self.height_input)
+        layout.addRow("Background Color:", self.background_color_input)
+        
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
+
+        layout.addRow(button_box)
+    
+    def get_canvas(self):
+        if self.exec() == QDialog.DialogCode.Accepted:
+            try:
+                width = int(self.width_input.value())
+                height = int(self.height_input.value())
+                background_color = self.background_color_input.selectedColor
+                canvas = Canvas()
+                canvas.set_size(width, height)
+                canvas.image.fill(background_color)
+                return canvas
+            except ValueError:
+                return None
+        else:
+            return None 
+        
 
 
 class ResizeDialog(QDialog):
