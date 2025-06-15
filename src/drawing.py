@@ -1,11 +1,8 @@
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtGui import QPainter, QImage, QPen, QColor, QTransform
 from PyQt6.QtCore import Qt, QPoint, QPointF
+from tools import Tools # Import Tools from the new file
 
-# Define tool constants for clarity
-class Tools:
-    BRUSH = 0
-    ERASER = 1
 
 class DrawingWidget(QWidget):
     """
@@ -194,4 +191,3 @@ class DrawingWidget(QWidget):
 
         self._update_transform()
         self.update()
-

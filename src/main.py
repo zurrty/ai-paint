@@ -6,8 +6,9 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QIcon, QAction, QKeySequence # QKeySequence for keyboard shortcuts
 from PyQt6.QtCore import Qt
 
-# Import the DrawingWidget and Tools enum from the drawing.py file
-from drawing import DrawingWidget, Tools
+# Import the DrawingWidget from drawing.py
+from drawing import DrawingWidget
+from tools import Tools # Import Tools from the new file
 
 # Pillow (PIL) import - included for future use
 from PIL import Image
