@@ -23,6 +23,17 @@ class DrawingWidget(QWidget):
         self.pen_color = Qt.GlobalColor.black # Default pen color
         self.pen_size = 2         # Default pen size
 
+    def set_size(w=800,h=600):
+        # Create a new QImage with the updated widget size  
+        new_image = QImage((w,h), QImage.Format.Format_RGB32)
+        new_image.fill(Qt.GlobalColor.white) # Fill new areas with white
+
+        # Draw the old image onto the new one to preserve content
+        painter = QPainter(new_image)
+        painter.drawImage(0, 0, self.image)
+        self.image = new_image # Update the image reference
+
+        super().resizeEvent(event)
     def paintEvent(self, event):
         """
         Handles the painting of the widget. This method is called whenever
@@ -61,19 +72,4 @@ class DrawingWidget(QWidget):
         """
         if event.button() == Qt.MouseButton.LeftButton:
             self.drawing = False
-
-    def resizeEvent(self, event):
-        """
-        Handles widget resize events. Resizes the QImage to match the new
-        widget size, preserving existing content if possible.
-        """
-        # Create a new QImage with the updated widget size
-        new_image = QImage(self.size(), QImage.Format.Format_RGB32)
-        new_image.fill(Qt.GlobalColor.white) # Fill new areas with white
-
-        # Draw the old image onto the new one to preserve content
-        painter = QPainter(new_image)
-        painter.drawImage(0, 0, self.image)
-        self.image = new_image # Update the image reference
-
-        super().resizeEvent(event)
+        
