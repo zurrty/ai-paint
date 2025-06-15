@@ -1,7 +1,8 @@
 import sys
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QToolBar, QWidget,
-    QInputDialog, QMessageBox, QDialog, QFormLayout, QStyleFactory
+    QInputDialog, QMessageBox, QDialog, QFormLayout,
+    QSlider, QLabel # Added QSlider and QLabel
 )
 from PyQt6.QtGui import QIcon, QAction, QKeySequence # QKeySequence for keyboard shortcuts
 from PyQt6.QtCore import Qt
@@ -84,10 +85,27 @@ class PaintApp(QMainWindow):
 
         self.toolbar.addSeparator()
 
-        # Image Actions
+        # Brush Size Slider
+        self.toolbar.addWidget(QLabel("Brush Size:"))
+        self.brush_size_slider = QSlider(Qt.Orientation.Horizontal)
+        self.brush_size_slider.setMinimum(1)
+        self.brush_size_slider.setMaximum(50) # Max brush size
+        self.brush_size_slider.setValue(self.canvas.tool_size) # Initial value from canvas
+        self.brush_size_slider.setFixedWidth(150) # Give it a reasonable width
+        self.brush_size_slider.valueChanged.connect(self._update_brush_size_from_slider)
+        self.toolbar.addWidget(self.brush_size_slider)
+
+        # Label to display current brush size (optional, but good UX)
+        self.brush_size_label = QLabel(str(self.canvas.tool_size))
+        self.brush_size_label.setFixedWidth(30) # Fixed width for the label
+        self.toolbar.addWidget(self.brush_size_label)
 
 
         self.toolbar.addSeparator()
+    
+    def _update_brush_size_from_slider(self, value):
+        self.canvas.set_tool_size(value)
+        self.brush_size_label.setText(str(value)) # Update label
 
     def _set_brush_tool(self):
         """Sets the active tool to Brush."""
