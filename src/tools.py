@@ -33,7 +33,6 @@ class BaseTool:
 class BrushTool(BaseTool):
     def __init__(self, size=2, color=Qt.GlobalColor.black):
         super().__init__(size, color)
-        self.tool_type = "brush"
 
     def activate(self, canvas, image_pos): # Override to draw a dot on click
         super().activate(canvas, image_pos)
@@ -66,14 +65,37 @@ class BrushTool(BaseTool):
 
 class EraserTool(BaseTool):
     def __init__(self, size=10): # Eraser has its own default size, color is fixed
-        super().__init__(size, Qt.GlobalColor.white) # Color is white for eraser
-        self.tool_type = "eraser"
+        super().__init__(size, Qt.GlobalColor.white) # Eraser color should be white for RGB32 canvas
 
-    # Note: EraserTool would also need activate and move methods similar to BrushTool,
-    # but using its fixed color (Qt.GlobalColor.white).
-    # For brevity in this example, assuming similar implementation to BrushTool's move/activate
-    # but with self.color (which is white). A full implementation would mirror BrushTool's drawing logic.
-    # (Actual implementation for EraserTool's move/activate will be added in a subsequent step if needed)
+    def activate(self, canvas, image_pos):
+        super().activate(canvas, image_pos)
+        if self._canvas_ref:
+            painter = QPainter(self._canvas_ref.image)
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+            pen = QPen(self.color, self.size, # Use self.color (which is now white)
+                       Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap,
+                       Qt.PenJoinStyle.RoundJoin)
+            painter.setPen(pen)
+            painter.drawPoint(image_pos.toPointF())
+            painter.end()
+            self._canvas_ref.update()
+
+    def move(self, image_pos):
+        if not self._drawing or not self._canvas_ref:
+            return
+
+        painter = QPainter(self._canvas_ref.image)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        pen = QPen(self.color, self.size,
+                   Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap,
+                   Qt.PenJoinStyle.RoundJoin)
+        painter.setPen(pen)
+        painter.drawLine(self._last_image_pos.toPointF(), image_pos.toPointF())
+        painter.end()
+
+        self._last_image_pos = image_pos # Update last position
+        self._canvas_ref.update()
+
 
 class Tools(Enum):
     """
