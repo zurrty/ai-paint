@@ -7,7 +7,7 @@ from PyQt6.QtGui import QIcon, QAction, QKeySequence # QKeySequence for keyboard
 from PyQt6.QtCore import Qt
 
 # Import the DrawingWidget from drawing.py
-from drawing import DrawingWidget
+from drawing import Canvas
 from tools import Tools # Import Tools from the new file
 
 # Pillow (PIL) import - included for future use
@@ -25,7 +25,7 @@ class PaintApp(QMainWindow):
         self.setWindowTitle("PyQt6 Paint Application")
         self.setGeometry(100, 100, 800, 600)
 
-        self.drawing_widget = DrawingWidget(self)
+        self.drawing_widget = Canvas(self)
         self.setCentralWidget(self.drawing_widget)
 
         self._create_toolbar() # Call method to create toolbar

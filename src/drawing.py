@@ -1,10 +1,10 @@
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtGui import QPainter, QImage, QPen, QColor, QTransform
 from PyQt6.QtCore import Qt, QPoint, QPointF
-from tools import Tools # Import Tools from the new file
+from tools import Tools, BrushTool, EraserTool # Be more specific or use from tools import *
 
 
-class DrawingWidget(QWidget):
+class Canvas(QWidget):
     """
     A custom widget that serves as the drawing canvas for the paint application.
     It manages the QImage where drawing operations are performed and handles
@@ -23,14 +23,13 @@ class DrawingWidget(QWidget):
 
         # Drawing state
         self.drawing = False
-        self.last_drawing_point_image = QPointF()
+        # self.last_drawing_point_image = QPointF() # Moved to tool instance
 
         # Tool properties
-        self.current_tool = Tools.BRUSH # Default tool is brush
-        self.brush_color = Qt.GlobalColor.black # Default brush color
-        self.brush_size = 2         # Default brush size
-
-        self.eraser_size = 10       # Default eraser size (larger)
+        self.tool_size = 2         # Default generic tool size
+        self.current_tool = Tools.BRUSH.value # Get the BrushTool instance
+        self.current_tool.size = self.tool_size # Apply initial canvas tool size
+        # self.brush_color attribute removed, color is managed by the tool instance or set via set_current_tool_color
 
         # Pan and Zoom state
         self.zoom_factor = 1.0
@@ -82,21 +81,29 @@ class DrawingWidget(QWidget):
         self.update()
 
     def set_tool(self, tool):
-        """Sets the active drawing tool."""
-        self.current_tool = tool
-        self.update() # Update to reflect potential cursor change (not implemented yet, but good practice)
+        """Sets the active drawing tool from the Tools enum."""
+        if self.drawing: # If a tool is currently active, deactivate it first
+            self.current_tool.deactivate()
+            self.drawing = False
 
-    def set_brush_color(self, color):
-        """Sets the brush color."""
-        self.brush_color = color
+        self.current_tool = tool.value # tool is an enum member like Tools.BRUSH
+        # Apply the canvas's current generic tool size to the newly selected tool
+        if hasattr(self.current_tool, 'size'):
+            self.current_tool.size = self.tool_size
+        self.update()
 
-    def set_brush_size(self, size):
-        """Sets the brush size."""
-        self.brush_size = size
+    def set_current_tool_color(self, color):
+        """Sets the color for the current tool, if applicable (e.g., Brush)."""
+        # EraserTool manages its own color (white) and should not be changed by this.
+        if hasattr(self.current_tool, 'color') and not isinstance(self.current_tool, EraserTool):
+            self.current_tool.color = color
 
-    def set_eraser_size(self, size):
-        """Sets the eraser size."""
-        self.eraser_size = size
+    def set_tool_size(self, size):
+        """Sets the generic tool size and applies it to the current tool."""
+        self.tool_size = max(1, size) # Ensure size is at least 1
+        if hasattr(self.current_tool, 'size'):
+            self.current_tool.size = self.tool_size
+
 
     def paintEvent(self, event):
         """
@@ -116,9 +123,11 @@ class DrawingWidget(QWidget):
         and panning (middle click).
         """
         if event.button() == Qt.MouseButton.LeftButton:
-            self.drawing = True
             # Map the widget coordinates to image coordinates for drawing
-            self.last_drawing_point_image = self.transform.inverted()[0].map(event.pos())
+            image_pos = self.transform.inverted()[0].map(event.pos())
+            self.current_tool.activate(self, image_pos)
+            if self.current_tool._drawing: # Check if tool successfully activated
+                 self.drawing = True # Canvas's drawing flag for mouseMove/Release
         elif event.button() == Qt.MouseButton.MiddleButton:
             self.panning = True
             self.last_pan_point = event.pos()
@@ -129,27 +138,10 @@ class DrawingWidget(QWidget):
         Handles mouse move events. Continues drawing or panning based on active flags.
         Applies current tool properties (color, size).
         """
-        if self.drawing and event.buttons() & Qt.MouseButton.LeftButton:
+        if self.drawing and (event.buttons() & Qt.MouseButton.LeftButton):
             current_drawing_point_image = self.transform.inverted()[0].map(event.pos())
-
-            painter = QPainter(self.image)
-            painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
-
-            # Set pen based on the current tool
-            if self.current_tool == Tools.BRUSH:
-                painter.setPen(QPen(self.brush_color, self.brush_size,
-                                    Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap,
-                                    Qt.PenJoinStyle.RoundJoin))
-            elif self.current_tool == Tools.ERASER:
-                painter.setPen(QPen(Qt.GlobalColor.white, self.eraser_size, # Eraser draws with white color
-                                    Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap,
-                                    Qt.PenJoinStyle.RoundJoin))
-
-            painter.drawLine(self.last_drawing_point_image.toPointF(), current_drawing_point_image.toPointF())
-            painter.end()
-
-            self.last_drawing_point_image = current_drawing_point_image
-            self.update()
+            self.current_tool.move(current_drawing_point_image)
+            # self.update() # Tool's move method should call update
 
         elif self.panning and event.buttons() & Qt.MouseButton.MiddleButton:
             delta = event.pos() - self.last_pan_point
@@ -163,11 +155,12 @@ class DrawingWidget(QWidget):
         """
         Handles mouse release events. Stops drawing or panning.
         """
-        if event.button() == Qt.MouseButton.LeftButton:
-            self.drawing = False
+        if event.button() == Qt.MouseButton.LeftButton and self.drawing:
+            self.current_tool.deactivate()
+            self.drawing = False # Reset canvas drawing flag
         elif event.button() == Qt.MouseButton.MiddleButton:
             self.panning = False
-        self.update()
+        # self.update() # Usually not needed on release unless visual state changes
 
     def wheelEvent(self, event):
         """
