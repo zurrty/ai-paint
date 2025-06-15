@@ -1,6 +1,6 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow
-from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QApplication, QMainWindow, QToolBar, QWidget
+from PyQt6.QtGui import QIcon, QAction # QAction will be used for toolbar buttons
 from PyQt6.QtCore import Qt
 
 # Import the DrawingWidget from the new drawing.py file
@@ -13,6 +13,7 @@ class PaintApp(QMainWindow):
     """
     The main application window for the PyQt6 Paint application.
     Initializes the main window and sets up the DrawingWidget as its central widget.
+    Also adds a horizontal toolbar at the top.
     """
     def __init__(self):
         super().__init__()
@@ -22,6 +23,32 @@ class PaintApp(QMainWindow):
         # Create an instance of our custom DrawingWidget
         self.drawing_widget = DrawingWidget(self)
         self.setCentralWidget(self.drawing_widget) # Set it as the central widget
+
+        # --- Add a horizontal toolbar ---
+        self.toolbar = QToolBar("Main Toolbar")
+        self.addToolBar(self.toolbar)
+        self.toolbar.setMovable(False) # Make the toolbar fixed
+
+        # Example: Add some actions to the toolbar (these don't do anything yet)
+        # You'll add actual functionalities later
+        new_action = QAction("New", self)
+        # new_action.setIcon(QIcon("path/to/new_icon.png")) # Uncomment to add an icon
+        self.toolbar.addAction(new_action)
+
+        open_action = QAction("Open", self)
+        self.toolbar.addAction(open_action)
+
+        save_action = QAction("Save", self)
+        self.toolbar.addAction(save_action)
+
+        # Add a separator for better organization
+        self.toolbar.addSeparator()
+
+        # Another example action
+        exit_action = QAction("Exit", self)
+        exit_action.triggered.connect(self.close) # Connect exit action to close the window
+        self.toolbar.addAction(exit_action)
+        # --- End of toolbar setup ---
 
         # Optional: Set a window icon (uncomment and provide a path if you have an icon file)
         # self.setWindowIcon(QIcon("path/to/your/icon.png"))
