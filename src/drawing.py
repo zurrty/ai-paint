@@ -134,17 +134,30 @@ class Canvas(QWidget):
         return False
 
     def save_image(self):
-        """Saves the current image to a file."""
-        if type(self.image_path) == str:
-            self.image.save(self.image_path)
+        """
+        Saves the current image. If a path is already known, it overwrites the
+        file. Otherwise, it calls `save_image_as()` to prompt the user for a path.
+        Returns True on success, False on failure.
+        """
+        if self.image_path:
+            return self.image.save(self.image_path)
         else:
-            file_path, _ = QFileDialog.getSaveFileName(
-                self, "Save Image", "", "Image Files (*.png *.jpg *.jpeg *.bmp)"
-            )
-            if file_path:
-                self.image_path = file_path
-                self.save_image()
+            return self.save_image_as()
 
+    def save_image_as(self):
+        """
+        Prompts the user for a file path and saves the current image to that location.
+        Updates the internal image_path on success.
+        Returns True on success or user cancellation. Returns False on a save error.
+        """
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, "Save Image As...", "", "Image Files (*.png *.jpg *.jpeg *.bmp)"
+        )
+        if not file_path:
+            return True # User cancelled, which is not an error state.
+
+        self.image_path = file_path
+        return self.image.save(self.image_path) # Returns True on success, False on error
 
     def paintEvent(self, event):
         """

@@ -50,8 +50,12 @@ class PaintApp(QMainWindow):
 
         save_action = QAction(QIcon.fromTheme("document-save"), "Save", self)
         self.file_menu.addAction(save_action)
-        save_action.triggered.connect(self.canvas.save_image)
+        save_action.triggered.connect(self._save_dialog)
         
+        save_as_action = QAction(QIcon.fromTheme("document-save-as"), "Save As...", self)
+        save_as_action.triggered.connect(self._save_as_dialog)
+        self.file_menu.addAction(save_as_action)
+
         self.file_menu.addSeparator()
         exit_action = QAction(QIcon.fromTheme("application-exit"), "Exit", self)
         self.file_menu.addAction(exit_action)
@@ -150,6 +154,20 @@ class PaintApp(QMainWindow):
         self.fill_action.setChecked(True)
         self.brush_action.setChecked(False)
         self.eraser_action.setChecked(False)
+
+    def _save_dialog(self):
+        """Handles the save action, showing an error if it fails."""
+        if not self.canvas.save_image():
+            QMessageBox.warning(
+                self, "Save Error", "Could not save the image to the specified path."
+            )
+
+    def _save_as_dialog(self):
+        """Handles the 'Save As' action, showing an error if it fails."""
+        if not self.canvas.save_image_as():
+            QMessageBox.warning(
+                self, "Save Error", "Could not save the image to the specified path."
+            )
 
     def _show_resize_dialog(self):
         resize_dialog = ResizeDialog(self.canvas.image_width, self.canvas.image_height, self)
