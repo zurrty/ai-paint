@@ -38,7 +38,7 @@ class BrushTool(BaseTool):
         super().activate(canvas, image_pos)
         if self._canvas_ref:
             painter = QPainter(self._canvas_ref.image)
-            painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
             pen = QPen(self.color, self.size,
                        Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap,
                        Qt.PenJoinStyle.RoundJoin)
@@ -52,7 +52,7 @@ class BrushTool(BaseTool):
             return
 
         painter = QPainter(self._canvas_ref.image)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
         pen = QPen(self.color, self.size,
                    Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap,
                    Qt.PenJoinStyle.RoundJoin)
@@ -71,7 +71,7 @@ class EraserTool(BaseTool):
         super().activate(canvas, image_pos)
         if self._canvas_ref:
             painter = QPainter(self._canvas_ref.image)
-            painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
             pen = QPen(self.color, self.size, # Use self.color (which is now white)
                        Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap,
                        Qt.PenJoinStyle.RoundJoin)
@@ -85,7 +85,7 @@ class EraserTool(BaseTool):
             return
 
         painter = QPainter(self._canvas_ref.image)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
         pen = QPen(self.color, self.size,
                    Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap,
                    Qt.PenJoinStyle.RoundJoin)

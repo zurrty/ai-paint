@@ -25,7 +25,7 @@ class PaintApp(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("PyQt6 Paint Application")
+        self.setWindowTitle("GCPaint")
         self.setGeometry(100, 100, 800, 600)
         self.canvas = Canvas(self)
         self.setCentralWidget(self.canvas)
