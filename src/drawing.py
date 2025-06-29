@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QWidget, QFileDialog
 from PyQt6.QtGui import QPainter, QImage, QPen, QColor, QTransform
 from PyQt6.QtCore import Qt, QPoint, QPointF
-from tools import Tools, BrushTool, EraserTool # Be more specific or use from tools import *
+from tools import Tools, BrushTool, EraserTool, FillTool
 
 
 class Canvas(QWidget):
@@ -93,15 +93,15 @@ class Canvas(QWidget):
         # Apply the canvas's current generic tool size to the newly selected tool
         if hasattr(self.current_tool, 'size'):
             self.current_tool.size = self.tool_size
-        # If the new tool is a brush, make sure it uses the current canvas brush color
-        if isinstance(self.current_tool, BrushTool):
+        # If the new tool uses the main brush color, apply it
+        if isinstance(self.current_tool, (BrushTool, FillTool)):
             self.current_tool.color = self.brush_color
         self.update()
 
     def set_brush_color(self, color):
-        """Sets the main brush color and applies it to the current tool if it's a brush."""
+        """Sets the main brush color and applies it to the current tool if it's a brush or fill tool."""
         self.brush_color = color
-        if isinstance(self.current_tool, BrushTool):
+        if isinstance(self.current_tool, (BrushTool, FillTool)):
             self.current_tool.color = self.brush_color
 
     def set_tool_size(self, size):

@@ -85,6 +85,13 @@ class PaintApp(QMainWindow):
         self.eraser_action.triggered.connect(self._set_eraser_tool)
         self.toolbar.addAction(self.eraser_action)
 
+        # Fill Tool Action
+        self.fill_action = QAction(QIcon.fromTheme('format-fill-color'), "Fill", self)
+        self.fill_action.setShortcut(QKeySequence("F"))
+        self.fill_action.setCheckable(True)
+        self.fill_action.triggered.connect(self._set_fill_tool)
+        self.toolbar.addAction(self.fill_action)
+
         # Color Picker Action
         self.color_action = QAction(QIcon.fromTheme('preferences-color'), "Color", self)
         self.color_action.setToolTip("Select Brush Color")
@@ -127,13 +134,22 @@ class PaintApp(QMainWindow):
         """Sets the active tool to Brush."""
         self.canvas.set_tool(Tools.BRUSH)
         self.brush_action.setChecked(True)
-        self.eraser_action.setChecked(False) # Ensure only one tool is active
+        self.eraser_action.setChecked(False)
+        self.fill_action.setChecked(False)
 
     def _set_eraser_tool(self):
         """Sets the active tool to Eraser."""
         self.canvas.set_tool(Tools.ERASER)
         self.eraser_action.setChecked(True)
-        self.brush_action.setChecked(False) # Ensure only one tool is active
+        self.brush_action.setChecked(False)
+        self.fill_action.setChecked(False)
+
+    def _set_fill_tool(self):
+        """Sets the active tool to Fill."""
+        self.canvas.set_tool(Tools.FILL)
+        self.fill_action.setChecked(True)
+        self.brush_action.setChecked(False)
+        self.eraser_action.setChecked(False)
 
     def _show_resize_dialog(self):
         resize_dialog = ResizeDialog(self.canvas.image_width, self.canvas.image_height, self)
@@ -172,6 +188,8 @@ class PaintApp(QMainWindow):
             self._set_brush_tool()
         elif event.key() == Qt.Key.Key_E:
             self._set_eraser_tool()
+        elif event.key() == Qt.Key.Key_F:
+            self._set_fill_tool()
         else:
             super().keyPressEvent(event) # Pass other key events to parent class
 
