@@ -1,7 +1,8 @@
 from collections import deque
 from PyQt6.QtCore import Qt, QPointF, QPoint
-from PyQt6.QtGui import QPainter, QPen
+from PyQt6.QtGui import QPainter, QPen, QImage
 from enum import Enum
+import struct
 
 
 class BaseTool:
@@ -77,33 +78,55 @@ class FillTool(BaseTool):
         the flood fill and then finishes.
         """
         super().activate(canvas, image_pos)
-        image = self._canvas.image
-        start_point = image_pos
 
+        image = self._canvas.image
+        # This optimized version only works for 32-bit images.
+        # The canvas creates and loads images in RGB32, so this should be safe.
+        if image.format() not in (QImage.Format.Format_RGB32, QImage.Format.Format_ARGB32, QImage.Format.Format_ARGB32_Premultiplied):
+            # A fallback to a slower method could be implemented here if other formats were supported.
+            print("Error: Fill tool only supports 32-bit images.")
+            self.deactivate()
+            return
+
+        start_point = image_pos
         if not image.rect().contains(start_point):
             self.deactivate()
             return
 
-        target_rgb = image.pixel(start_point)
+        target_rgb = image.pixel(start_point) # Get target color once
         fill_rgb = self.color.rgba()
 
         if target_rgb == fill_rgb:
             self.deactivate()
             return
 
+        # Direct memory access for performance
+        ptr = image.bits()
+        # We must give the void pointer a size before we can treat it as a buffer
+        ptr.setsize(image.sizeInBytes())
+
+        bytes_per_line = image.bytesPerLine()
+        width = image.width()
+        height = image.height()
+
         q = deque([start_point])
-        visited = {start_point}
+
+        # Paint the starting pixel first to ensure it's colored and to mark it as "visited"
+        start_offset = start_point.y() * bytes_per_line + start_point.x() * 4
+        struct.pack_into('<I', ptr, start_offset, fill_rgb)
 
         while q:
             p = q.popleft()
-            image.setPixel(p, fill_rgb)
+            px, py = p.x(), p.y()
 
-            for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
-                neighbor = QPoint(p.x() + dx, p.y() + dy)
-
-                if image.rect().contains(neighbor) and neighbor not in visited and image.pixel(neighbor) == target_rgb:
-                    visited.add(neighbor)
-                    q.append(neighbor)
+            # Check neighbors (West, East, North, South)
+            for nx, ny in [(px - 1, py), (px + 1, py), (px, py - 1), (px, py + 1)]:
+                if 0 <= nx < width and 0 <= ny < height:
+                    offset = ny * bytes_per_line + nx * 4
+                    current_val, = struct.unpack_from('<I', ptr, offset)
+                    if current_val == target_rgb:
+                        struct.pack_into('<I', ptr, offset, fill_rgb)
+                        q.append(QPoint(nx, ny))
 
         self._canvas.update()
         self.deactivate()
