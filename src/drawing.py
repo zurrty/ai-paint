@@ -43,6 +43,7 @@ class Canvas(QWidget):
         self.zoom_factor = 1.0
         self.pan_offset = QPoint(0, 0)
         self.panning = False
+        self.spacebar_panning_active = False
         self.last_pan_point = QPoint()
 
         # Transformation matrix for drawing and viewing
@@ -219,16 +220,20 @@ class Canvas(QWidget):
         Handles mouse press events. Differentiates between drawing (left click)
         and panning (middle click).
         """
-        if event.button() == Qt.MouseButton.LeftButton:
+        # Pan if middle-mouse is clicked, or if spacebar is held and left-mouse is clicked
+        if (event.button() == Qt.MouseButton.MiddleButton) or \
+           (self.spacebar_panning_active and event.button() == Qt.MouseButton.LeftButton):
+            self.panning = True
+            self.last_pan_point = event.pos()
+            if self.spacebar_panning_active:
+                self.setCursor(Qt.CursorShape.ClosedHandCursor)
+        elif event.button() == Qt.MouseButton.LeftButton:
             # Map the widget coordinates to image coordinates for drawing
             self.add_history_state()
             image_pos = self.transform.inverted()[0].map(event.pos())
             self.current_tool.activate(self, image_pos)
             if self.current_tool._drawing: # Check if tool successfully activated
                  self.drawing = True # Canvas's drawing flag for mouseMove/Release
-        elif event.button() == Qt.MouseButton.MiddleButton:
-            self.panning = True
-            self.last_pan_point = event.pos()
         self.update()
 
     def mouseMoveEvent(self, event):
@@ -240,12 +245,10 @@ class Canvas(QWidget):
             current_drawing_point_image = self.transform.inverted()[0].map(event.pos())
             self.current_tool.move(current_drawing_point_image)
             # self.update() # Tool's move method should call update
-
-        elif self.panning and event.buttons() & Qt.MouseButton.MiddleButton:
+        elif self.panning and (event.buttons() & (Qt.MouseButton.LeftButton | Qt.MouseButton.MiddleButton)):
             delta = event.pos() - self.last_pan_point
             self.pan_offset += delta
             self.last_pan_point = event.pos()
-
             self._update_transform()
             self.update()
 
@@ -253,12 +256,16 @@ class Canvas(QWidget):
         """
         Handles mouse release events. Stops drawing or panning.
         """
-        if event.button() == Qt.MouseButton.LeftButton and self.drawing:
-            self.current_tool.deactivate()
-            self.drawing = False # Reset canvas drawing flag
+        if event.button() == Qt.MouseButton.LeftButton:
+            if self.panning:
+                self.panning = False
+                if self.spacebar_panning_active:
+                    self.setCursor(Qt.CursorShape.OpenHandCursor)
+            elif self.drawing:
+                self.current_tool.deactivate()
+                self.drawing = False # Reset canvas drawing flag
         elif event.button() == Qt.MouseButton.MiddleButton:
             self.panning = False
-        # self.update() # Usually not needed on release unless visual state changes
 
     def wheelEvent(self, event):
         """
@@ -282,3 +289,20 @@ class Canvas(QWidget):
 
         self._update_transform()
         self.update()
+
+    def keyPressEvent(self, event):
+        """Handles key presses for activating spacebar panning."""
+        if event.key() == Qt.Key.Key_Space and not event.isAutoRepeat():
+            self.spacebar_panning_active = True
+            self.setCursor(Qt.CursorShape.OpenHandCursor)
+        else:
+            super().keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        """Handles key releases for deactivating spacebar panning."""
+        if event.key() == Qt.Key.Key_Space and not event.isAutoRepeat():
+            self.spacebar_panning_active = False
+            self.panning = False # Ensure panning stops when space is released
+            self.unsetCursor()
+        else:
+            super().keyReleaseEvent(event)
