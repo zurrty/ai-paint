@@ -107,6 +107,29 @@ class Canvas(QWidget):
         if hasattr(self.current_tool, 'size'):
             self.current_tool.size = self.tool_size
 
+    def load_image(self, file_path):
+        """
+        Loads an image from a specified file path.
+        If successful, the canvas is updated with the new image,
+        and the view is reset.
+        Returns True on success, False on failure.
+        """
+        new_image = QImage()
+        if new_image.load(file_path):
+            # Convert to a format that we can reliably draw on.
+            self.image = new_image.convertToFormat(QImage.Format.Format_RGB32)
+            self.image_width = self.image.width()
+            self.image_height = self.image.height()
+            self.image_path = file_path  # Store path for future saves
+
+            # Reset pan and zoom to fit the new image
+            self.zoom_factor = 1.0
+            self.pan_offset = QPoint(0, 0)
+            self._update_transform()
+            self.update()
+            return True
+        return False
+
     def save_image(self):
         """Saves the current image to a file."""
         if type(self.image_path) == str:

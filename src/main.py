@@ -1,7 +1,7 @@
 import sys
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QToolBar, QWidget,
-    QInputDialog, QMessageBox, QDialog, QFormLayout,
+    QInputDialog, QMessageBox, QDialog, QFormLayout, QFileDialog,
     QSlider, QLabel # Added QSlider and QLabel
 )
 from PyQt6.QtGui import QIcon, QAction, QKeySequence # QKeySequence for keyboard shortcuts
@@ -40,25 +40,27 @@ class PaintApp(QMainWindow):
         self.menu_bar = self.menuBar()
         self.file_menu = self.menu_bar.addMenu("File")
         # File Actions
-        new_action = QAction("New", self)
+        new_action = QAction(QIcon.fromTheme("document-new"), "New", self)
         new_action.triggered.connect(self._new_image_dialog)
         self.file_menu.addAction(new_action)
 
-        open_action = QAction("Open", self)
+        open_action = QAction(QIcon.fromTheme("document-open"), "Open", self)
+        open_action.triggered.connect(self._open_file_dialog)
         self.file_menu.addAction(open_action)
 
-        save_action = QAction("Save", self)
+        save_action = QAction(QIcon.fromTheme("document-save"), "Save", self)
         self.file_menu.addAction(save_action)
         save_action.triggered.connect(self.canvas.save_image)
         
-        exit_action = QAction("Exit", self)
+        self.file_menu.addSeparator()
+        exit_action = QAction(QIcon.fromTheme("application-exit"), "Exit", self)
         self.file_menu.addAction(exit_action)
         exit_action.triggered.connect(self.close)
 
 
         # Image Actions
         self.image_menu = self.menu_bar.addMenu("Image")
-        resize_action = QAction("Resize Image", self)
+        resize_action = QAction(QIcon.fromTheme("transform-scale"), "Resize Image", self)
         resize_action.triggered.connect(self._show_resize_dialog)
         self.image_menu.addAction(resize_action)
 
@@ -125,6 +127,21 @@ class PaintApp(QMainWindow):
             new_width, new_height = resize_dialog.get_size()
             if new_width is not None and new_height is not None:
                 self.canvas.set_size(new_width, new_height)
+
+    def _open_file_dialog(self):
+        """Opens a file dialog to select an image and loads it into the canvas."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Open Image",
+            "",
+            "Image Files (*.png *.jpg *.jpeg *.bmp)"
+        )
+        if file_path:
+            if not self.canvas.load_image(file_path):
+                QMessageBox.warning(
+                    self, "Open Error", f"Could not open the image file:\n{file_path}"
+                )
+
     def _new_image_dialog(self):
         new_image_dialog = NewImageDialog(self)
         canvas = new_image_dialog.get_canvas()
