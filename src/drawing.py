@@ -1,8 +1,8 @@
 from PyQt6.QtWidgets import QWidget, QFileDialog
 from PyQt6.QtGui import QPainter, QImage, QPen, QColor, QTransform
-from PyQt6.QtCore import Qt, QPoint, QPointF
+from PyQt6.QtCore import Qt, QPoint, QPointF, pyqtSignal
 from tools import Tools, BrushTool, EraserTool, FillTool
-
+from history import HistoryManager
 
 class Canvas(QWidget):
     """
@@ -11,6 +11,8 @@ class Canvas(QWidget):
     mouse events for interactive drawing, including pan and zoom.
     Supports different drawing tools like brush and eraser.
     """
+
+    historyChanged = pyqtSignal()
 
     # Path to image file
     image_path = None
@@ -23,6 +25,9 @@ class Canvas(QWidget):
         self.image_height = 600
         self.image = QImage(self.image_width, self.image_height, QImage.Format.Format_RGB32)
         self.image.fill(Qt.GlobalColor.white) # Fill the image with white background
+
+        # History management
+        self.history_manager = HistoryManager()
 
         # Drawing state
         self.drawing = False
@@ -63,8 +68,8 @@ class Canvas(QWidget):
         When the image is resized, reset pan/zoom for a clear view of the new canvas.
         """
         if w < 1 or h < 1:
-            print("Warning: Cannot set image size to zero or negative dimensions.")
             return
+        self.add_history_state()
 
         new_image = QImage(w, h, QImage.Format.Format_RGB32)
         new_image.fill(Qt.GlobalColor.white)
@@ -82,6 +87,41 @@ class Canvas(QWidget):
         self.pan_offset = QPoint(0, 0)
         self._update_transform()
         self.update()
+
+    def new_image(self, w, h, color):
+        """Re-initializes the canvas with a new blank image, clearing history."""
+        self.image = QImage(w, h, QImage.Format.Format_RGB32)
+        self.image.fill(color)
+        self.image_width = w
+        self.image_height = h
+        self.image_path = None
+
+        self.history_manager.clear()
+        self.historyChanged.emit()
+        self.update()
+
+    def add_history_state(self):
+        """Adds the current image state to the undo stack."""
+        self.history_manager.add_state(self.image)
+        self.historyChanged.emit()
+
+    def undo(self):
+        """Performs an undo operation and updates the canvas."""
+        undone_image = self.history_manager.undo(self.image)
+        if undone_image:
+            self.image = undone_image
+            self.image_width = self.image.width()
+            self.image_height = self.image.height()
+            self.historyChanged.emit()
+            self.update()
+
+    def redo(self):
+        """Performs a redo operation and updates the canvas."""
+        redone_image = self.history_manager.redo(self.image)
+        if redone_image:
+            self.image = redone_image
+            self.historyChanged.emit()
+            self.update()
 
     def set_tool(self, tool):
         """Sets the active drawing tool from the Tools enum."""
@@ -124,6 +164,9 @@ class Canvas(QWidget):
             self.image_width = self.image.width()
             self.image_height = self.image.height()
             self.image_path = file_path  # Store path for future saves
+
+            self.history_manager.clear()
+            self.historyChanged.emit()
 
             # Reset pan and zoom to fit the new image
             self.zoom_factor = 1.0
@@ -178,6 +221,7 @@ class Canvas(QWidget):
         """
         if event.button() == Qt.MouseButton.LeftButton:
             # Map the widget coordinates to image coordinates for drawing
+            self.add_history_state()
             image_pos = self.transform.inverted()[0].map(event.pos())
             self.current_tool.activate(self, image_pos)
             if self.current_tool._drawing: # Check if tool successfully activated

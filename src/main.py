@@ -31,8 +31,11 @@ class PaintApp(QMainWindow):
         self.setCentralWidget(self.canvas)
         # menu bar
         
-        self._create_menubar() # Create menu bar
+        self._create_menubar() # Create menu bar and actions
         self._create_toolbar() # Call method to create toolbar
+
+        self.canvas.historyChanged.connect(self._update_history_actions)
+        self._update_history_actions() # Set initial state
 
         # Optional: Set a window icon
         # self.setWindowIcon(QIcon("path/to/your/icon.png"))
@@ -62,11 +65,24 @@ class PaintApp(QMainWindow):
         exit_action.triggered.connect(self.close)
 
 
+        # Edit Menu
+        edit_menu = self.menu_bar.addMenu("Edit")
+        self.undo_action = QAction(QIcon.fromTheme("edit-undo"), "Undo", self)
+        self.undo_action.setShortcut(QKeySequence.StandardKey.Undo)
+        self.undo_action.triggered.connect(self.canvas.undo)
+        edit_menu.addAction(self.undo_action)
+
+        self.redo_action = QAction(QIcon.fromTheme("edit-redo"), "Redo", self)
+        self.redo_action.setShortcut(QKeySequence.StandardKey.Redo)
+        self.redo_action.triggered.connect(self.canvas.redo)
+        edit_menu.addAction(self.redo_action)
+
         # Image Actions
         self.image_menu = self.menu_bar.addMenu("Image")
         resize_action = QAction(QIcon.fromTheme("transform-scale"), "Resize Image", self)
         resize_action.triggered.connect(self._show_resize_dialog)
         self.image_menu.addAction(resize_action)
+
 
     def _create_toolbar(self):
         """
@@ -75,6 +91,12 @@ class PaintApp(QMainWindow):
         self.toolbar = QToolBar("Main Toolbar")
         self.addToolBar(self.toolbar)
         self.toolbar.setMovable(True)
+
+        # Add history actions
+        self.toolbar.addAction(self.undo_action)
+        self.toolbar.addAction(self.redo_action)
+        self.toolbar.addSeparator()
+
 
         # Tool Actions
         self.brush_action = QAction(QIcon.fromTheme('draw-brush'), "Brush", self)
@@ -125,6 +147,11 @@ class PaintApp(QMainWindow):
     def _update_brush_size_from_slider(self, value):
         self.canvas.set_tool_size(value)
         self.brush_size_label.setText(str(value)) # Update label
+
+    def _update_history_actions(self):
+        """Enables or disables undo/redo actions based on history availability."""
+        self.undo_action.setEnabled(self.canvas.history_manager.can_undo())
+        self.redo_action.setEnabled(self.canvas.history_manager.can_redo())
 
     def _show_color_dialog(self):
         """Opens a color dialog to select a new brush color."""
@@ -192,11 +219,10 @@ class PaintApp(QMainWindow):
 
     def _new_image_dialog(self):
         new_image_dialog = NewImageDialog(self)
-        canvas = new_image_dialog.get_canvas()
-        if canvas is not None:
-            self.setCentralWidget(canvas)
-            self.canvas = canvas
-
+        if new_image_dialog.exec() == QDialog.DialogCode.Accepted:
+            width, height, color = new_image_dialog.get_values()
+            if width and height and color.isValid():
+                self.canvas.new_image(width, height, color)
 
     def keyPressEvent(self, event):
         """

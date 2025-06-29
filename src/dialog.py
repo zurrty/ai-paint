@@ -31,21 +31,14 @@ class NewImageDialog(QDialog):
 
         layout.addRow(button_box)
     
-    def get_canvas(self):
-        if self.exec() == QDialog.DialogCode.Accepted:
-            try:
-                width = int(self.width_input.value())
-                height = int(self.height_input.value())
-                background_color = self.background_color_input.selectedColor()
-                canvas = Canvas()
-                canvas.set_size(width, height)
-                canvas.image.fill(background_color)
-                return canvas
-            except ValueError:
-                return None
-        else:
-            return None 
-        
+    def get_values(self):
+        """Returns the selected width, height, and color."""
+        try:
+            width = int(self.width_input.value())
+            height = int(self.height_input.value())
+            return width, height, self.background_color_input.selectedColor()
+        except (ValueError, TypeError):
+            return None, None, None
 
 
 class ResizeDialog(QDialog):
