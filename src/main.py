@@ -1,7 +1,7 @@
 import sys
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QToolBar, QWidget,
-    QInputDialog, QMessageBox, QDialog, QFormLayout, QFileDialog,
+    QInputDialog, QMessageBox, QDialog, QFormLayout, QFileDialog, QColorDialog,
     QSlider, QLabel # Added QSlider and QLabel
 )
 from PyQt6.QtGui import QIcon, QAction, QKeySequence # QKeySequence for keyboard shortcuts
@@ -85,6 +85,12 @@ class PaintApp(QMainWindow):
         self.eraser_action.triggered.connect(self._set_eraser_tool)
         self.toolbar.addAction(self.eraser_action)
 
+        # Color Picker Action
+        self.color_action = QAction(QIcon.fromTheme('preferences-color'), "Color", self)
+        self.color_action.setToolTip("Select Brush Color")
+        self.color_action.triggered.connect(self._show_color_dialog)
+        self.toolbar.addAction(self.color_action)
+
         self.toolbar.addSeparator()
 
         # Brush Size Slider
@@ -108,6 +114,14 @@ class PaintApp(QMainWindow):
     def _update_brush_size_from_slider(self, value):
         self.canvas.set_tool_size(value)
         self.brush_size_label.setText(str(value)) # Update label
+
+    def _show_color_dialog(self):
+        """Opens a color dialog to select a new brush color."""
+        initial_color = self.canvas.brush_color
+        color = QColorDialog.getColor(initial_color, self, "Select Brush Color")
+
+        if color.isValid():
+            self.canvas.set_brush_color(color)
 
     def _set_brush_tool(self):
         """Sets the active tool to Brush."""

@@ -26,13 +26,13 @@ class Canvas(QWidget):
 
         # Drawing state
         self.drawing = False
-        # self.last_drawing_point_image = QPointF() # Moved to tool instance
 
         # Tool properties
         self.tool_size = 2         # Default generic tool size
+        self.brush_color = QColor(Qt.GlobalColor.black) # Main color for drawing tools
         self.current_tool = Tools.BRUSH.value # Get the BrushTool instance
-        self.current_tool.size = self.tool_size # Apply initial canvas tool size
-        # self.brush_color attribute removed, color is managed by the tool instance or set via set_current_tool_color
+        self.current_tool.size = self.tool_size # Apply initial canvas tool size to the tool
+        self.current_tool.color = self.brush_color # Apply initial canvas color to the tool
 
         # Pan and Zoom state
         self.zoom_factor = 1.0
@@ -93,13 +93,16 @@ class Canvas(QWidget):
         # Apply the canvas's current generic tool size to the newly selected tool
         if hasattr(self.current_tool, 'size'):
             self.current_tool.size = self.tool_size
+        # If the new tool is a brush, make sure it uses the current canvas brush color
+        if isinstance(self.current_tool, BrushTool):
+            self.current_tool.color = self.brush_color
         self.update()
 
-    def set_current_tool_color(self, color):
-        """Sets the color for the current tool, if applicable (e.g., Brush)."""
-        # EraserTool manages its own color (white) and should not be changed by this.
-        if hasattr(self.current_tool, 'color') and not isinstance(self.current_tool, EraserTool):
-            self.current_tool.color = color
+    def set_brush_color(self, color):
+        """Sets the main brush color and applies it to the current tool if it's a brush."""
+        self.brush_color = color
+        if isinstance(self.current_tool, BrushTool):
+            self.current_tool.color = self.brush_color
 
     def set_tool_size(self, size):
         """Sets the generic tool size and applies it to the current tool."""
